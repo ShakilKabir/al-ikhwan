@@ -15,12 +15,14 @@ import {
 } from "@/lib/queries/cash-book";
 import { listMembersWithDues } from "@/lib/queries/members";
 import { intParam } from "@/lib/search-params";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 export default async function DashboardPage({ searchParams }: PageProps<"/">) {
   const year = intParam(await searchParams, "year");
   const thisYear = currentYear();
 
-  const [overview, members, years, totals, byCategory, recent, periods] = await Promise.all([
+  const [user, overview, members, years, totals, byCategory, recent, periods] = await Promise.all([
+    getCurrentUser(),
     getOverview(),
     listMembersWithDues(thisYear),
     listYears(),
@@ -50,9 +52,11 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
       <PageHeader
         title="Dashboard"
         actions={
-          <LinkButton href="/cash-book/new" variant="primary">
-            + Add cash book entry
-          </LinkButton>
+          user && (
+            <LinkButton href="/cash-book/new" variant="primary">
+              + Add cash book entry
+            </LinkButton>
+          )
         }
       />
 

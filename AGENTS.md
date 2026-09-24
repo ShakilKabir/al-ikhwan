@@ -16,4 +16,5 @@ Al-Ikhwan club accounts: cash book, member dues, lender accounts. Read README.md
 - Reads go in `src/lib/queries/`, writes in `src/lib/services/` (each write runs in a transaction and records an `audit_log` row). Server actions in `src/app/**/actions.ts` only parse forms and call services.
 - Money is `numeric(12,2)`, read as numbers; sum in SQL, round with `round2` in JS.
 - Dates are plain `YYYY-MM-DD` strings (no time zones).
+- Access: every server action that writes starts with `getActor()` (or `requireUser()`/`requireAdmin()`), and every page that edits calls `requireUser(path)`. Show members' phone, birth date, blood group and notes only when `getCurrentUser()` returns a user.
 - Verify with `npm run typecheck && npm run lint && npm test`.

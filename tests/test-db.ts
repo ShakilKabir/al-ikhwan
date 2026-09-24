@@ -20,6 +20,6 @@ export async function createTestDb() {
 export async function resetDb() {
   const { db } = (await import("@/db")) as unknown as Awaited<ReturnType<typeof createTestDb>>;
   await db.execute(
-    sql`truncate audit_log, loan_entries, lenders, transactions, categories, member_ledger, members restart identity cascade`,
+    sql`truncate audit_log, sessions, users, loan_entries, lenders, transactions, categories, member_ledger, members restart identity cascade`,
   );
 }

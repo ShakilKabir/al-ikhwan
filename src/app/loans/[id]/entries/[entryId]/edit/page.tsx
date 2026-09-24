@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireUser } from "@/lib/auth/current-user";
 import { notFound } from "next/navigation";
 import { ConfirmButton } from "@/components/client";
 import { Alert, Card, PageHeader } from "@/components/ui";
@@ -14,6 +15,7 @@ export default async function EditLoanEntryPage({
   searchParams,
 }: PageProps<"/loans/[id]/entries/[entryId]/edit">) {
   const [{ id, entryId }, sp] = await Promise.all([params, searchParams]);
+  await requireUser(`/loans/${id}/entries/${entryId}/edit`);
   const [lender, entry] = await Promise.all([getLender(Number(id)), getLoanEntry(Number(entryId))]);
   if (!lender || !entry || entry.lenderId !== lender.id) notFound();
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireUser } from "@/lib/auth/current-user";
 import { notFound } from "next/navigation";
 import { Card, PageHeader } from "@/components/ui";
 import { getMember, listAssignees } from "@/lib/queries/members";
@@ -7,7 +8,9 @@ import { MemberForm } from "@/app/members/member-form";
 export const metadata: Metadata = { title: "Edit member" };
 
 export default async function EditMemberPage({ params }: PageProps<"/members/[id]/edit">) {
-  const member = await getMember(Number((await params).id));
+  const { id } = await params;
+  await requireUser(`/members/${id}/edit`);
+  const member = await getMember(Number(id));
   if (!member) notFound();
   const assignees = await listAssignees();
 

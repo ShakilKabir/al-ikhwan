@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireUser } from "@/lib/auth/current-user";
 import { notFound } from "next/navigation";
 import { ConfirmButton } from "@/components/client";
 import { Alert, Card, PageHeader } from "@/components/ui";
@@ -17,6 +18,7 @@ export default async function EditTransactionPage({
   searchParams,
 }: PageProps<"/cash-book/[id]/edit">) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
+  await requireUser(`/cash-book/${id}/edit`);
   const transaction = await getTransaction(Number(id));
   if (!transaction) notFound();
 

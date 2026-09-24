@@ -22,11 +22,11 @@ export async function saveLender(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const actor = await getActor();
   const { data, fieldErrors, raw } = parseForm(lenderSchema, formData);
   const values = typedValues(raw);
   if (!data) return { fieldErrors, values };
 
-  const actor = await getActor();
   return saveAndRedirect(
     () => (id ? updateLender(id, data, actor) : createLender(data, actor)),
     values,
@@ -45,11 +45,11 @@ export async function saveLoanEntry(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const actor = await getActor();
   const { data, fieldErrors, raw } = parseForm(loanEntrySchema, formData);
   const values = typedValues(raw);
   if (!data) return { fieldErrors, values };
 
-  const actor = await getActor();
   return saveAndRedirect(
     () => (entryId ? updateLoanEntry(entryId, data, actor) : createLoanEntry(lenderId, data, actor)),
     values,

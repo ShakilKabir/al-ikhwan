@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireUser } from "@/lib/auth/current-user";
 import { Card, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 import { AUDIT_PAGE_SIZE, listAuditLog } from "@/lib/queries/audit";
 import { intParam } from "@/lib/search-params";
@@ -17,6 +18,7 @@ const when = new Intl.DateTimeFormat("en-GB", {
 });
 
 export default async function HistoryPage({ searchParams }: PageProps<"/history">) {
+  await requireUser("/history");
   const page = intParam(await searchParams, "page") ?? 1;
   const { rows, total } = await listAuditLog(page);
   const lastPage = Math.max(1, Math.ceil(total / AUDIT_PAGE_SIZE));

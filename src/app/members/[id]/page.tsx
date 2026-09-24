@@ -22,6 +22,7 @@ import { CATEGORY_LABELS, CREDIT_KINDS, LEDGER_KIND_LABELS } from "@/lib/member-
 import { listCategories } from "@/lib/queries/cash-book";
 import { getMember, getMemberStatement, listMembersWithDues } from "@/lib/queries/members";
 import { intParam, param } from "@/lib/search-params";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { removeMember } from "../actions";
 
 export async function generateMetadata({ params }: PageProps<"/members/[id]">): Promise<Metadata> {
@@ -35,7 +36,8 @@ export default async function MemberPage({ params, searchParams }: PageProps<"/m
   if (!member) notFound();
 
   const year = intParam(sp, "year") ?? currentYear();
-  const [statement, [dues], categories] = await Promise.all([
+  const [user, statement, [dues], categories] = await Promise.all([
+    getCurrentUser(),
     getMemberStatement(member.id),
     listMembersWithDues(year, member.id),
     listCategories(),
@@ -65,13 +67,15 @@ export default async function MemberPage({ params, searchParams }: PageProps<"/m
         }
         back={{ href: `/members?year=${year}`, label: "Members" }}
         actions={
-          <>
-            <LinkButton href={paymentHref} variant="primary">
-              Record payment
-            </LinkButton>
-            <LinkButton href={`${here}/entries/new`}>Add fee or waiver</LinkButton>
-            <LinkButton href={`${here}/edit`}>Edit details</LinkButton>
-          </>
+          user && (
+            <>
+              <LinkButton href={paymentHref} variant="primary">
+                Record payment
+              </LinkButton>
+              <LinkButton href={`${here}/entries/new`}>Add fee or waiver</LinkButton>
+              <LinkButton href={`${here}/edit`}>Edit details</LinkButton>
+            </>
+          )
         }
       />
 
@@ -114,9 +118,11 @@ export default async function MemberPage({ params, searchParams }: PageProps<"/m
                     <Th align="right" className="hidden sm:table-cell">Paid / waived</Th>
                     <Th align="right" className="sm:hidden">Amount</Th>
                     <Th align="right">Owes</Th>
-                    <Th>
-                      <span className="sr-only">Edit</span>
-                    </Th>
+                    {user && (
+                      <Th>
+                        <span className="sr-only">Edit</span>
+                      </Th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -151,18 +157,20 @@ export default async function MemberPage({ params, searchParams }: PageProps<"/m
                         <Td align="right" className="font-medium">
                           {formatMoney(line.balance)}
                         </Td>
-                        <Td>
-                          <Link
-                            className="text-sm text-ink-secondary hover:text-ink hover:underline"
-                            href={
-                              line.source === "ledger"
-                                ? `${here}/entries/${line.id}/edit`
-                                : `/cash-book/${line.id}/edit?returnTo=${encodeURIComponent(here)}`
-                            }
-                          >
-                            Edit
-                          </Link>
-                        </Td>
+                        {user && (
+                          <Td>
+                            <Link
+                              className="text-sm text-ink-secondary hover:text-ink hover:underline"
+                              href={
+                                line.source === "ledger"
+                                  ? `${here}/entries/${line.id}/edit`
+                                  : `/cash-book/${line.id}/edit?returnTo=${encodeURIComponent(here)}`
+                              }
+                            >
+                              Edit
+                            </Link>
+                          </Td>
+                        )}
                       </tr>
                     );
                   })}
@@ -174,27 +182,41 @@ export default async function MemberPage({ params, searchParams }: PageProps<"/m
 
         <Card title="Details" className="h-fit">
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-            <Detail label="Phone" value={member.phone} />
             <Detail label="Yearly fee" value={member.yearlyFee ? `৳ ${formatMoney(member.yearlyFee)}` : "None"} />
             <Detail label="Assigned to" value={member.assignedTo} />
             <Detail label="Registered" value={formatDate(member.registeredOn)} />
             <Detail label="Old ID" value={member.oldCode} />
-            <Detail label="Blood group" value={member.bloodGroup} />
-            <Detail label="Date of birth" value={formatDate(member.dateOfBirth)} />
+            {/* Personal details are only for people who are logged in. */}
+            {user && (
+              <>
+                <Detail label="Phone" value={member.phone} />
+                <Detail label="Blood group" value={member.bloodGroup} />
+                <Detail label="Date of birth" value={formatDate(member.dateOfBirth)} />
+              </>
+            )}
           </dl>
-          {member.notes && (
+          {user && member.notes && (
             <p className="mt-4 whitespace-pre-line border-t border-line pt-3 text-sm text-ink-secondary">
               {member.notes}
             </p>
           )}
-          <div className="mt-4 border-t border-line pt-3">
-            <ConfirmButton
-              action={removeMember.bind(null, member.id)}
-              confirm={`Delete ${member.name} and their fees/waivers? This is kept in the change history. (To keep their record, untick "Active" instead.)`}
-            >
-              Delete member
-            </ConfirmButton>
-          </div>
+          {user ? (
+            <div className="mt-4 border-t border-line pt-3">
+              <ConfirmButton
+                action={removeMember.bind(null, member.id)}
+                confirm={`Delete ${member.name} and their fees/waivers? This is kept in the change history. (To keep their record, untick "Active" instead.)`}
+              >
+                Delete member
+              </ConfirmButton>
+            </div>
+          ) : (
+            <p className="mt-4 border-t border-line pt-3 text-xs text-ink-muted">
+              <Link href={`/login?next=${encodeURIComponent(here)}`} className="underline">
+                Log in
+              </Link>{" "}
+              to see contact details or make changes.
+            </p>
+          )}
         </Card>
       </div>
     </>

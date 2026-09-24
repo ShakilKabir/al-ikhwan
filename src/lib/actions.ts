@@ -1,22 +1,16 @@
 /**
- * Helpers for server actions (the functions forms post to).
- *
- * There is no login yet. Editors type their name once (Settings) and it is kept
- * in a cookie so the change history shows who did what. To add real
- * authentication later, check the session in getActor() and refuse when absent:
- * every write goes through it.
+ * Helpers for server actions (the functions forms post to). Every action that
+ * changes data starts with getActor(), which refuses anyone who isn't logged in.
  */
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { requireUser } from "@/lib/auth/current-user";
 import { ServiceError } from "@/lib/services/common";
 import type { FieldErrors } from "@/lib/validation";
 
-export const ACTOR_COOKIE = "editor_name";
-
+/** The logged-in user's name, for the change history. Sends anyone else to the login page. */
 export async function getActor() {
-  const name = (await cookies()).get(ACTOR_COOKIE)?.value;
-  return name ? decodeURIComponent(name) : null;
+  return (await requireUser()).name;
 }
 
 /** What a form shows after a failed save: messages plus what was typed, so nothing is lost. */
@@ -26,9 +20,14 @@ export type FormState = {
   values?: Record<string, string>;
 };
 
+/** Fields that are never sent back to the browser, even after a failed save. */
+const SECRET_FIELDS = new Set(["password", "confirm", "currentPassword", "newPassword", "code"]);
+
 export function typedValues(raw: Record<string, FormDataEntryValue>) {
   return Object.fromEntries(
-    Object.entries(raw).filter((e): e is [string, string] => typeof e[1] === "string"),
+    Object.entries(raw).filter(
+      (e): e is [string, string] => typeof e[1] === "string" && !SECRET_FIELDS.has(e[0]),
+    ),
   );
 }
 

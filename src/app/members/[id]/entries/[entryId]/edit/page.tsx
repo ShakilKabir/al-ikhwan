@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireUser } from "@/lib/auth/current-user";
 import { notFound } from "next/navigation";
 import { ConfirmButton } from "@/components/client";
 import { Alert, Card, PageHeader } from "@/components/ui";
@@ -14,6 +15,7 @@ export default async function EditLedgerEntryPage({
   searchParams,
 }: PageProps<"/members/[id]/entries/[entryId]/edit">) {
   const [{ id, entryId }, sp] = await Promise.all([params, searchParams]);
+  await requireUser(`/members/${id}/entries/${entryId}/edit`);
   const [member, entry] = await Promise.all([getMember(Number(id)), getLedgerEntry(Number(entryId))]);
   if (!member || !entry || entry.memberId !== member.id) notFound();
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireUser } from "@/lib/auth/current-user";
 import { notFound } from "next/navigation";
 import { Card, PageHeader } from "@/components/ui";
 import { today } from "@/lib/format";
@@ -8,7 +9,9 @@ import { LoanEntryForm } from "@/app/loans/forms";
 export const metadata: Metadata = { title: "Add loan entry" };
 
 export default async function NewLoanEntryPage({ params }: PageProps<"/loans/[id]/entries/new">) {
-  const lender = await getLender(Number((await params).id));
+  const { id } = await params;
+  await requireUser(`/loans/${id}/entries/new`);
+  const lender = await getLender(Number(id));
   if (!lender) notFound();
 
   return (

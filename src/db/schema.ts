@@ -193,6 +193,43 @@ export const loanEntries = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// Logins: everyone can view, logged-in users can edit, admins manage users
+// ---------------------------------------------------------------------------
+
+export const userRole = pgEnum("user_role", ["admin", "editor"]);
+
+export const users = pgTable("users", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  /** What they type to log in (an email, phone number or short name), stored in lowercase. */
+  username: text().notNull().unique(),
+  name: text().notNull(),
+  /** scrypt hash; see src/lib/auth/password.ts. */
+  passwordHash: text().notNull(),
+  role: userRole().notNull().default("editor"),
+  /** True after an admin creates the account or resets the password. */
+  mustChangePassword: boolean().notNull().default(true),
+  isActive: boolean().notNull().default(true),
+  failedLogins: integer().notNull().default(0),
+  lockedUntil: timestamp({ withTimezone: true }),
+  lastLoginAt: timestamp({ withTimezone: true }),
+  ...timestamps,
+});
+
+export const sessions = pgTable(
+  "sessions",
+  {
+    /** SHA-256 of the token in the browser's cookie; the token itself is never stored. */
+    id: text().primaryKey(),
+    userId: integer()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: timestamp({ withTimezone: true }).notNull(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index().on(t.userId)],
+);
+
+// ---------------------------------------------------------------------------
 // Change history
 // ---------------------------------------------------------------------------
 
@@ -201,7 +238,7 @@ export const auditLog = pgTable(
   {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     at: timestamp({ withTimezone: true }).notNull().defaultNow(),
-    /** Name the editor typed in (there is no login yet). */
+    /** Name of the logged-in user (before logins existed: the name the editor typed in). */
     actor: text(),
     action: text({ enum: ["create", "update", "delete", "import"] }).notNull(),
     entity: text().notNull(),
@@ -220,6 +257,8 @@ export type MemberLedgerEntry = typeof memberLedger.$inferSelect;
 export type Lender = typeof lenders.$inferSelect;
 export type LoanEntry = typeof loanEntries.$inferSelect;
 export type AuditLogEntry = typeof auditLog.$inferSelect;
+export type User = typeof users.$inferSelect;
+export type UserRole = (typeof userRole.enumValues)[number];
 export type EntryType = (typeof entryType.enumValues)[number];
 export type MemberCategory = (typeof memberCategory.enumValues)[number];
 export type LedgerKind = (typeof ledgerKind.enumValues)[number];

@@ -7,19 +7,23 @@ import { useFormStatus } from "react-dom";
 import { buttonClass } from "./ui";
 
 const NAV = [
-  { href: "/", label: "Dashboard" },
-  { href: "/cash-book", label: "Cash book" },
-  { href: "/members", label: "Members" },
-  { href: "/loans", label: "Loans" },
-  { href: "/history", label: "History" },
-  { href: "/settings", label: "Settings" },
-];
+  { href: "/", label: "Dashboard", show: "everyone" },
+  { href: "/cash-book", label: "Cash book", show: "everyone" },
+  { href: "/members", label: "Members", show: "everyone" },
+  { href: "/loans", label: "Loans", show: "everyone" },
+  { href: "/history", label: "History", show: "user" },
+  { href: "/settings", label: "Settings", show: "user" },
+  { href: "/users", label: "Users", show: "admin" },
+] as const;
 
-export function Nav() {
+export function Nav({ role }: { role: "admin" | "editor" | null }) {
   const pathname = usePathname();
+  const visible = NAV.filter(
+    (item) => item.show === "everyone" || (item.show === "user" && role) || role === "admin",
+  );
   return (
     <nav aria-label="Main" className="flex flex-wrap gap-1">
-      {NAV.map((item) => {
+      {visible.map((item) => {
         const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
         return (
           <Link

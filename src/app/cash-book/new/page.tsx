@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireUser } from "@/lib/auth/current-user";
 import { Alert, Card, PageHeader } from "@/components/ui";
 import { today } from "@/lib/format";
 import { listCategories } from "@/lib/queries/cash-book";
@@ -10,6 +11,7 @@ import { TransactionForm } from "../transaction-form";
 export const metadata: Metadata = { title: "Add cash book entry" };
 
 export default async function NewTransactionPage({ searchParams }: PageProps<"/cash-book/new">) {
+  await requireUser("/cash-book/new");
   const sp = await searchParams;
   const [categories, members] = await Promise.all([listCategories(), listMemberOptions()]);
   const returnTo = safePath(param(sp, "returnTo"), "/cash-book");

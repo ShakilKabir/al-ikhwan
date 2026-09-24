@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireUser } from "@/lib/auth/current-user";
 import Link from "next/link";
 import { SubmitButton } from "@/components/client";
 import { Card, EmptyState, PageHeader, Table, Td, Th } from "@/components/ui";
@@ -10,6 +11,7 @@ import { chargeFees } from "../actions";
 export const metadata: Metadata = { title: "Charge yearly fees" };
 
 export default async function ChargeFeesPage({ searchParams }: PageProps<"/members/fees">) {
+  await requireUser("/members/fees");
   const year = intParam(await searchParams, "year") ?? currentYear();
   const due = await previewYearlyFees(year);
   const total = round2(due.reduce((s, m) => s + (m.yearlyFee ?? 0), 0));

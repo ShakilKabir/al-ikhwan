@@ -8,6 +8,7 @@ import {
   ledgerKind,
   loanEntryKind,
   memberCategory,
+  userRole,
 } from "@/db/schema";
 
 const required = (label: string, max = 200) =>
@@ -106,6 +107,61 @@ export const loanEntrySchema = z.object({
   description: required("Description", 300),
 });
 export type LoanEntryInput = z.infer<typeof loanEntrySchema>;
+
+// ---------------------------------------------------------------------------
+// Logins and accounts
+// ---------------------------------------------------------------------------
+
+const username = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(3, "Use at least 3 characters")
+  .max(100, "Too long")
+  .regex(/^[a-z0-9@._+-]+$/, "Use letters, numbers and @ . _ + - only (no spaces)");
+
+const newPassword = z.string().min(8, "Use at least 8 characters").max(200, "Too long");
+
+export const loginSchema = z.object({
+  username: z.string().trim().min(1, "Enter your username"),
+  password: z.string().min(1, "Enter your password"),
+});
+
+export const newUserSchema = z.object({
+  name: required("Name", 100),
+  username,
+  role: z.enum(userRole.enumValues, { error: "Choose a role" }),
+  password: newPassword,
+});
+export type NewUserInput = z.infer<typeof newUserSchema>;
+
+export const setupSchema = z
+  .object({
+    code: z.string().trim().min(1, "Enter the setup code"),
+    name: required("Name", 100),
+    username,
+    password: newPassword,
+    confirm: z.string(),
+  })
+  .refine((v) => v.password === v.confirm, { path: ["confirm"], message: "The passwords don't match" });
+
+export const userUpdateSchema = z.object({
+  name: required("Name", 100),
+  username,
+  role: z.enum(userRole.enumValues, { error: "Choose a role" }),
+  isActive: checkbox,
+});
+export type UserUpdateInput = z.infer<typeof userUpdateSchema>;
+
+export const resetPasswordSchema = z.object({ password: newPassword });
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Enter your current password"),
+    newPassword,
+    confirm: z.string(),
+  })
+  .refine((v) => v.newPassword === v.confirm, { path: ["confirm"], message: "The passwords don't match" });
 
 export type FieldErrors = Partial<Record<string, string[]>>;
 

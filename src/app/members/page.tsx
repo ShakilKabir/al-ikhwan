@@ -23,6 +23,7 @@ import { currentYear, formatMoney, formatTaka, round2 } from "@/lib/format";
 import { CATEGORY_LABELS } from "@/lib/member-labels";
 import { listAssignees, listMembersWithDues, type MemberWithDues } from "@/lib/queries/members";
 import { intParam, param } from "@/lib/search-params";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 export const metadata: Metadata = { title: "Members" };
 
@@ -37,13 +38,22 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
   const owingOnly = param(sp, "owing") === "on";
   const showInactive = param(sp, "inactive") === "on";
 
-  const [all, assignees] = await Promise.all([listMembersWithDues(year), listAssignees()]);
+  const [user, all, assignees] = await Promise.all([
+    getCurrentUser(),
+    listMembersWithDues(year),
+    listAssignees(),
+  ]);
+  // Phone numbers and notes are only shown to people who are logged in.
+  const showPersonal = Boolean(user);
   const rows = all.filter(
     (m) =>
       (showInactive || m.isActive) &&
       (!owingOnly || m.due > 0) &&
       (!assigned || m.assignedTo === assigned) &&
-      (!q || [m.name, m.code, m.phone ?? "", m.oldCode ?? ""].some((v) => v.toLowerCase().includes(q))),
+      (!q ||
+        [m.name, m.code, m.oldCode ?? "", showPersonal ? (m.phone ?? "") : ""].some((v) =>
+          v.toLowerCase().includes(q),
+        )),
   );
   const active = all.filter((m) => m.isActive);
   const sum = (list: MemberWithDues[], key: "due" | "paid" | "waived") =>
@@ -58,12 +68,14 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
         title="Members"
         description={`Dues for ${year}. Payments linked in the cash book count automatically.`}
         actions={
-          <>
-            <LinkButton href={`/members/fees?year=${year}`}>Charge {year} yearly fees</LinkButton>
-            <LinkButton href="/members/new" variant="primary">
-              + Add member
-            </LinkButton>
-          </>
+          user && (
+            <>
+              <LinkButton href={`/members/fees?year=${year}`}>Charge {year} yearly fees</LinkButton>
+              <LinkButton href="/members/new" variant="primary">
+                + Add member
+              </LinkButton>
+            </>
+          )
         }
       />
 
@@ -118,7 +130,13 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
             <label htmlFor="q" className="mb-1 block text-xs font-medium text-ink-secondary">
               Search
             </label>
-            <Input id="q" name="q" type="search" placeholder="Name, ID or phone" defaultValue={param(sp, "q")} />
+            <Input
+              id="q"
+              name="q"
+              type="search"
+              placeholder={showPersonal ? "Name, ID or phone" : "Name or ID"}
+              defaultValue={param(sp, "q")}
+            />
           </div>
           <div>
             <label htmlFor="assigned" className="mb-1 block text-xs font-medium text-ink-secondary">
@@ -163,9 +181,9 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
           const list = rows.filter((m) => m.category === category);
           if (list.length === 0) return null;
           return category === "prospective" ? (
-            <ProspectiveSection key={category} members={list} />
+            <ProspectiveSection key={category} members={list} showPersonal={showPersonal} />
           ) : (
-            <DuesSection key={category} category={category} year={year} members={list} />
+            <DuesSection key={category} category={category} year={year} members={list} showPersonal={showPersonal} />
           );
         })}
       </div>
@@ -182,10 +200,12 @@ function DuesSection({
   category,
   year,
   members,
+  showPersonal,
 }: {
   category: MemberCategory;
   year: number;
   members: MemberWithDues[];
+  showPersonal: boolean;
 }) {
   const total = (key: "carried" | "fees" | "waived" | "paid" | "due") =>
     round2(members.reduce((s, m) => s + m[key], 0));
@@ -220,7 +240,7 @@ function DuesSection({
                 )}
                 <p className="text-xs text-ink-muted">
                   <span className="sm:hidden">{m.code} · </span>
-                  {[m.memberType, m.phone].filter(Boolean).join(" · ")}
+                  {[m.memberType, showPersonal && m.phone].filter(Boolean).join(" · ")}
                   {m.assignedTo && <span className="sm:hidden"> · {m.assignedTo}</span>}
                 </p>
               </Td>
@@ -252,7 +272,7 @@ function DuesSection({
   );
 }
 
-function ProspectiveSection({ members }: { members: MemberWithDues[] }) {
+function ProspectiveSection({ members, showPersonal }: { members: MemberWithDues[]; showPersonal: boolean }) {
   return (
     <Card
       title="Under consideration"
@@ -265,7 +285,7 @@ function ProspectiveSection({ members }: { members: MemberWithDues[] }) {
             <Th className="hidden sm:table-cell">ID</Th>
             <Th>Name</Th>
             <Th className="hidden sm:table-cell">Assigned to</Th>
-            <Th className="hidden md:table-cell">Notes</Th>
+            {showPersonal && <Th className="hidden md:table-cell">Notes</Th>}
           </tr>
         </thead>
         <tbody>
@@ -277,11 +297,13 @@ function ProspectiveSection({ members }: { members: MemberWithDues[] }) {
                   {m.name}
                 </Link>
                 <p className="text-xs text-ink-muted">
-                  {[m.memberType, m.phone].filter(Boolean).join(" · ")}
+                  {[m.memberType, showPersonal && m.phone].filter(Boolean).join(" · ")}
                 </p>
               </Td>
               <Td className="hidden text-ink-secondary sm:table-cell">{m.assignedTo}</Td>
-              <Td className="hidden max-w-sm whitespace-pre-line text-ink-secondary md:table-cell">{m.notes}</Td>
+              {showPersonal && (
+                <Td className="hidden max-w-sm whitespace-pre-line text-ink-secondary md:table-cell">{m.notes}</Td>
+              )}
             </tr>
           ))}
         </tbody>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireUser } from "@/lib/auth/current-user";
 import { notFound } from "next/navigation";
 import { Card, PageHeader } from "@/components/ui";
 import { today } from "@/lib/format";
@@ -8,7 +9,9 @@ import { LedgerEntryForm } from "../ledger-entry-form";
 export const metadata: Metadata = { title: "Add fee or waiver" };
 
 export default async function NewLedgerEntryPage({ params }: PageProps<"/members/[id]/entries/new">) {
-  const member = await getMember(Number((await params).id));
+  const { id } = await params;
+  await requireUser(`/members/${id}/entries/new`);
+  const member = await getMember(Number(id));
   if (!member) notFound();
 
   return (

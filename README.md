@@ -11,7 +11,11 @@ once, and the database is now the source of truth.
 - **Members**: the member list with each member's dues for a year (carried forward, fees, waived, paid, due), their full statement, and a one-click "charge this year's yearly fee".
 - **Loans**: accounts payable. One running account per lender (Bike X, Rana Bhai, Nakib Bhai, …).
 - **History**: every change, who made it, and the before/after values.
-- **Settings**: your name (for the history), cash book categories, and an Excel backup download.
+- **Settings**: cash book categories and an Excel backup download.
+- **Users** (admins): who can log in.
+
+Anyone can view the dashboard, cash book, member dues and loans. Changing
+anything needs a login (see [Logins](#logins)).
 
 ## How the numbers work
 
@@ -51,7 +55,8 @@ src/
   lib/queries/      reading data (cash book totals, member dues, loans, history)
   lib/services/     changing data: validation rules and change history live here
   lib/validation.ts form input rules (zod)
-  lib/actions.ts    helpers for server actions, and the editor-name cookie
+  lib/actions.ts    helpers for server actions (getActor() = the logged-in user)
+  lib/auth/         passwords, sessions, the current user
 drizzle/            SQL migrations (generated; never edit by hand)
 scripts/            the one-time spreadsheet import
 tests/              test database helper
@@ -103,13 +108,18 @@ Environment variables (Vercel → Project → Settings → Environment Variables
 - Neon can restore the database to any point in the last 6 hours (free plan). See Neon console → project "Al Ikhwan" → Branches → Restore.
 - **History** keeps the before/after values of every change, so one bad edit can be put back by hand.
 
-## No login (yet)
+## Logins
 
-Anyone with the link can view and edit. The site asks search engines not to
-index it, and every change is recorded in History with the name the editor
-typed in Settings. To add a login later, check the user in `getActor()` in
-`src/lib/actions.ts`: every write goes through it. See
-`node_modules/next/dist/docs/01-app/02-guides/authentication.md`.
+| | Can do |
+|---|---|
+| Anyone (not logged in) | View the dashboard, cash book, member dues and loans. No phone numbers, birth dates, blood groups or member notes; no History, Settings or Excel backup. |
+| Editor | Everything above, plus add, edit and delete entries, members, fees and loans; see personal details, History and Settings; download the backup. |
+| Admin | Everything an editor can, plus add users, reset passwords and deactivate accounts (Users page). |
+
+- **First admin**: on a new site, `/setup` creates the first admin with a one-time setup code. It stops working as soon as any account exists. If the code is lost before setup, make a new one: `node -e "const c=require('crypto').randomBytes(10).toString('hex').toUpperCase();console.log(c, require('crypto').createHash('sha256').update(c).digest('hex'))"` prints a code and its hash; put the hash in `SETUP_CODE_SHA256` in `src/lib/services/users.ts` and deploy.
+- **Adding people**: Users → Add a user. Send them the link, their username and the temporary password; they must choose their own password when they first log in.
+- **Forgotten password**: an admin resets it (Users → Edit → Reset password). This also unlocks the account and logs them out everywhere.
+- **Safety**: passwords are hashed with scrypt; sessions live in the database (30 days since the last visit) and the browser only holds a random token in an HttpOnly cookie. Five wrong passwords lock an account for 15 minutes. Every page that edits, every server action (through `getActor()` / `requireUser()`) and the Excel export check the login on the server; hiding buttons is only for convenience.
 
 ## The spreadsheet import (already done)
 

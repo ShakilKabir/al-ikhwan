@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireUser } from "@/lib/auth/current-user";
 import { Card, PageHeader } from "@/components/ui";
 import type { MemberCategory } from "@/db/schema";
 import { DEFAULT_YEARLY_FEE } from "@/lib/club";
@@ -10,6 +11,7 @@ import { MemberForm } from "../member-form";
 export const metadata: Metadata = { title: "Add member" };
 
 export default async function NewMemberPage() {
+  await requireUser("/members/new");
   const categories = Object.keys(CATEGORY_LABELS) as MemberCategory[];
   const [codes, assignees] = await Promise.all([
     Promise.all(categories.map(nextMemberCode)),

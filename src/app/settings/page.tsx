@@ -1,47 +1,28 @@
 import type { Metadata } from "next";
-import { SubmitButton } from "@/components/client";
-import { Alert, Card, Input, LinkButton, PageHeader } from "@/components/ui";
-import { getActor } from "@/lib/actions";
+import { Alert, Card, LinkButton, PageHeader } from "@/components/ui";
+import { requireUser } from "@/lib/auth/current-user";
 import { listCategories } from "@/lib/queries/cash-book";
 import { param } from "@/lib/search-params";
-import { setEditorName } from "./actions";
 import { AddCategoryForm, CategoryRow } from "./category-forms";
 
 export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage({ searchParams }: PageProps<"/settings">) {
-  const sp = await searchParams;
-  const [actor, categories] = await Promise.all([getActor(), listCategories()]);
+  await requireUser("/settings");
+  const [sp, categories] = await Promise.all([searchParams, listCategories()]);
 
   return (
     <>
       <PageHeader title="Settings" />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card
-          title="Your name"
-          description="Saved in this browser and shown in the change history next to everything you add, edit or delete."
-        >
-          {param(sp, "saved") === "name" && (
-            <div className="mb-3">
-              <Alert tone="info">Saved.</Alert>
-            </div>
-          )}
-          <form action={setEditorName} className="flex flex-wrap gap-2">
-            <label htmlFor="editor-name" className="sr-only">
-              Your name
-            </label>
-            <Input id="editor-name" name="name" defaultValue={actor ?? ""} placeholder="e.g. Shakil" maxLength={60} className="flex-1" />
-            <SubmitButton>Save name</SubmitButton>
-          </form>
-        </Card>
-
-        <Card title="Backup" description="Everything in one Excel file: cash book, members, fees and payments, loans and the change history.">
-          <LinkButton href="/export" prefetch={false}>
-            Download Excel backup
-          </LinkButton>
-        </Card>
-      </div>
+      <Card
+        title="Backup"
+        description="Everything in one Excel file: cash book, members, fees and payments, loans and the change history."
+      >
+        <LinkButton href="/export" prefetch={false}>
+          Download Excel backup
+        </LinkButton>
+      </Card>
 
       <Card
         title="Cash book categories"

@@ -6,6 +6,7 @@ import { Alert, Card, EmptyState, LinkButton, PageHeader, SignedAmount, Table, T
 import { formatDate, formatMoney } from "@/lib/format";
 import { getLender, getLenderStatement } from "@/lib/queries/loans";
 import { param } from "@/lib/search-params";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { removeLender } from "../actions";
 
 export async function generateMetadata({ params }: PageProps<"/loans/[id]">): Promise<Metadata> {
@@ -17,7 +18,7 @@ export default async function LenderPage({ params, searchParams }: PageProps<"/l
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   const lender = await getLender(Number(id));
   if (!lender) notFound();
-  const entries = await getLenderStatement(lender.id);
+  const [user, entries] = await Promise.all([getCurrentUser(), getLenderStatement(lender.id)]);
   const owed = entries.at(-1)?.owed ?? 0;
 
   return (
@@ -27,17 +28,19 @@ export default async function LenderPage({ params, searchParams }: PageProps<"/l
         description={owed === 0 ? "Nothing owed" : `The club owes ৳ ${formatMoney(owed)}`}
         back={{ href: "/loans", label: "Loans" }}
         actions={
-          <>
-            <LinkButton href={`/loans/${lender.id}/entries/new`} variant="primary">
-              + Add entry
-            </LinkButton>
-            <LinkButton href={`/loans/${lender.id}/edit`}>Edit lender</LinkButton>
-            {entries.length === 0 && (
-              <ConfirmButton action={removeLender.bind(null, lender.id)} confirm={`Delete ${lender.name}?`} size="md">
-                Delete lender
-              </ConfirmButton>
-            )}
-          </>
+          user && (
+            <>
+              <LinkButton href={`/loans/${lender.id}/entries/new`} variant="primary">
+                + Add entry
+              </LinkButton>
+              <LinkButton href={`/loans/${lender.id}/edit`}>Edit lender</LinkButton>
+              {entries.length === 0 && (
+                <ConfirmButton action={removeLender.bind(null, lender.id)} confirm={`Delete ${lender.name}?`} size="md">
+                  Delete lender
+                </ConfirmButton>
+              )}
+            </>
+          )
         }
       />
       {param(sp, "error") && (
@@ -60,9 +63,11 @@ export default async function LenderPage({ params, searchParams }: PageProps<"/l
                 <Th align="right" className="hidden sm:table-cell">Repaid</Th>
                 <Th align="right" className="sm:hidden">Amount</Th>
                 <Th align="right">Club owes</Th>
-                <Th>
-                  <span className="sr-only">Edit</span>
-                </Th>
+                {user && (
+                  <Th>
+                    <span className="sr-only">Edit</span>
+                  </Th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -85,14 +90,16 @@ export default async function LenderPage({ params, searchParams }: PageProps<"/l
                   <Td align="right" className="font-medium">
                     {formatMoney(e.owed)}
                   </Td>
-                  <Td>
-                    <Link
-                      href={`/loans/${lender.id}/entries/${e.id}/edit`}
-                      className="text-sm text-ink-secondary hover:text-ink hover:underline"
-                    >
-                      Edit
-                    </Link>
-                  </Td>
+                  {user && (
+                    <Td>
+                      <Link
+                        href={`/loans/${lender.id}/entries/${e.id}/edit`}
+                        className="text-sm text-ink-secondary hover:text-ink hover:underline"
+                      >
+                        Edit
+                      </Link>
+                    </Td>
+                  )}
                 </tr>
               ))}
             </tbody>

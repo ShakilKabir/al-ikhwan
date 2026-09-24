@@ -20,11 +20,11 @@ export async function saveTransaction(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const actor = await getActor();
   const { data, fieldErrors, raw } = parseForm(transactionSchema, formData);
   const values = typedValues(raw);
   if (!data) return { fieldErrors, values };
 
-  const actor = await getActor();
   const returnTo = safePath(formData.get("returnTo"), "/cash-book");
   // "Save & add another" keeps the date and category for quick entry of a batch.
   const next =

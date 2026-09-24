@@ -28,6 +28,7 @@ import {
   type TransactionFilters,
 } from "@/lib/queries/cash-book";
 import { intParam, param, withParams } from "@/lib/search-params";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 export const metadata: Metadata = { title: "Cash book" };
 
@@ -43,7 +44,8 @@ export default async function CashBookPage({ searchParams }: PageProps<"/cash-bo
   };
   const page = intParam(sp, "page") ?? 1;
 
-  const [overview, list, categories, years] = await Promise.all([
+  const [user, overview, list, categories, years] = await Promise.all([
+    getCurrentUser(),
     getOverview(),
     listTransactions(filters, page),
     listCategories(),
@@ -59,14 +61,16 @@ export default async function CashBookPage({ searchParams }: PageProps<"/cash-bo
         title="Cash book"
         description="Every taka in and out of the club."
         actions={
-          <>
-            <LinkButton href="/export" prefetch={false}>
-              Download Excel
-            </LinkButton>
-            <LinkButton href={`/cash-book/new?returnTo=${encodeURIComponent(here)}`} variant="primary">
-              + Add entry
-            </LinkButton>
-          </>
+          user && (
+            <>
+              <LinkButton href="/export" prefetch={false}>
+                Download Excel
+              </LinkButton>
+              <LinkButton href={`/cash-book/new?returnTo=${encodeURIComponent(here)}`} variant="primary">
+                + Add entry
+              </LinkButton>
+            </>
+          )
         }
       />
 
@@ -166,12 +170,16 @@ export default async function CashBookPage({ searchParams }: PageProps<"/cash-bo
                 <tr key={t.id} className="hover:bg-surface-muted">
                   <Td className="hidden whitespace-nowrap text-ink-secondary sm:table-cell">{formatDate(t.date)}</Td>
                   <Td className="sm:max-w-md">
-                    <Link
-                      href={`/cash-book/${t.id}/edit?returnTo=${encodeURIComponent(here)}`}
-                      className="font-medium hover:underline"
-                    >
-                      {t.particulars}
-                    </Link>
+                    {user ? (
+                      <Link
+                        href={`/cash-book/${t.id}/edit?returnTo=${encodeURIComponent(here)}`}
+                        className="font-medium hover:underline"
+                      >
+                        {t.particulars}
+                      </Link>
+                    ) : (
+                      <span className="font-medium">{t.particulars}</span>
+                    )}
                     {t.memberId && (
                       <span className="ml-2">
                         <Badge tone="accent">

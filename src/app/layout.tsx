@@ -2,7 +2,8 @@ import type { Metadata, Viewport } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Nav } from "@/components/client";
-import { getActor } from "@/lib/actions";
+import { getCurrentUser } from "@/lib/auth/current-user";
+import { logout } from "@/app/login/actions";
 import "./globals.css";
 
 // Every page shows live figures from the database, so nothing is prerendered at build time.
@@ -23,7 +24,8 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const actor = await getActor();
+  // Only for showing who is logged in; every page and action checks access itself.
+  const user = await getCurrentUser();
 
   return (
     <html lang="en" className="h-full antialiased">
@@ -38,11 +40,26 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <span className="text-lg font-semibold tracking-tight">Al-Ikhwan</span>
             </Link>
             <div className="order-last w-full sm:order-0 sm:w-auto sm:flex-1">
-              <Nav />
+              <Nav role={user?.role ?? null} />
             </div>
-            <Link href="/settings" className="ml-auto text-xs text-ink-muted hover:text-ink sm:ml-0">
-              {actor ? `Editing as ${actor}` : "Set your name"}
-            </Link>
+            <div className="ml-auto flex items-center gap-3 text-sm sm:ml-0">
+              {user ? (
+                <>
+                  <Link href="/account" className="text-ink-secondary hover:text-ink hover:underline">
+                    {user.name}
+                  </Link>
+                  <form action={logout}>
+                    <button type="submit" className="text-ink-muted hover:text-ink hover:underline">
+                      Log out
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <Link href="/login" className="font-medium text-accent hover:underline">
+                  Log in
+                </Link>
+              )}
+            </div>
           </div>
         </header>
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">{children}</main>

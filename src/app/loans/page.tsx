@@ -3,11 +3,12 @@ import Link from "next/link";
 import { Card, EmptyState, LinkButton, PageHeader, StatTile, Table, Td, Th } from "@/components/ui";
 import { formatDate, formatMoney, round2 } from "@/lib/format";
 import { listLenders } from "@/lib/queries/loans";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 export const metadata: Metadata = { title: "Loans" };
 
 export default async function LoansPage() {
-  const lenders = await listLenders();
+  const [user, lenders] = await Promise.all([getCurrentUser(), listLenders()]);
   const payable = round2(lenders.reduce((s, l) => s + l.outstanding, 0));
 
   return (
@@ -16,9 +17,11 @@ export default async function LoansPage() {
         title="Loans"
         description="Money people have lent the club (accounts payable)."
         actions={
-          <LinkButton href="/loans/new" variant="primary">
-            + Add lender
-          </LinkButton>
+          user && (
+            <LinkButton href="/loans/new" variant="primary">
+              + Add lender
+            </LinkButton>
+          )
         }
       />
 

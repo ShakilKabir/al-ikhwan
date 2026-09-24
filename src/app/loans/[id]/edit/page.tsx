@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireUser } from "@/lib/auth/current-user";
 import { notFound } from "next/navigation";
 import { Card, PageHeader } from "@/components/ui";
 import { getLender } from "@/lib/queries/loans";
@@ -7,7 +8,9 @@ import { LenderForm } from "@/app/loans/forms";
 export const metadata: Metadata = { title: "Edit lender" };
 
 export default async function EditLenderPage({ params }: PageProps<"/loans/[id]/edit">) {
-  const lender = await getLender(Number((await params).id));
+  const { id } = await params;
+  await requireUser(`/loans/${id}/edit`);
+  const lender = await getLender(Number(id));
   if (!lender) notFound();
 
   return (

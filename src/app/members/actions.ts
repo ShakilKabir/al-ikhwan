@@ -25,11 +25,11 @@ export async function saveMember(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const actor = await getActor();
   const { data, fieldErrors, raw } = parseForm(memberSchema, formData);
   const values = typedValues(raw);
   if (!data) return { fieldErrors, values };
 
-  const actor = await getActor();
   const chargeYearlyFee = formData.get("chargeYearlyFee") === "on";
   return saveAndRedirect(
     () =>
@@ -52,11 +52,11 @@ export async function saveLedgerEntry(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const actor = await getActor();
   const { data, fieldErrors, raw } = parseForm(ledgerEntrySchema, formData);
   const values = typedValues(raw);
   if (!data) return { fieldErrors, values };
 
-  const actor = await getActor();
   return saveAndRedirect(
     () =>
       entryId
@@ -77,7 +77,8 @@ export async function removeLedgerEntry(memberId: number, entryId: number) {
 }
 
 export async function chargeFees(year: number) {
-  const charged = await chargeYearlyFees(year, await getActor());
+  const actor = await getActor();
+  const charged = await chargeYearlyFees(year, actor);
   revalidatePath("/", "layout");
   redirect(`/members?year=${year}&charged=${charged}`);
 }
