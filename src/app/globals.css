@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+/*
+ * Colour tokens. Components use these (bg-surface, text-muted, …) rather than
+ * raw colours, so the whole app changes here, including dark mode.
+ * Chart series colours come from a colour-blind-safe palette: income is blue,
+ * expenses are orange, in both modes.
+ */
+:root {
+  color-scheme: light;
+  --page: #f6f6f3;
+  --surface: #ffffff;
+  --surface-muted: #f3f3ef;
+  --ink: #0b0b0b;
+  --ink-secondary: #52514e;
+  --ink-muted: #6f6e69;
+  --line: #e1e0d9;
+  --line-strong: #c3c2b7;
+  --accent: #15692f;
+  --accent-hover: #0f5424;
+  --accent-ink: #ffffff;
+  --accent-soft: #e6f2e9;
+  --danger: #b42323;
+  --danger-soft: #fbeaea;
+  --success-ink: #006300;
+  --income: #2a78d6;
+  --expense: #eb6834;
+  --focus: #2a78d6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-muted: #232322;
+    --ink: #ffffff;
+    --ink-secondary: #c3c2b7;
+    --ink-muted: #9d9c95;
+    --line: #2c2c2a;
+    --line-strong: #45443f;
+    --accent: #2f9e52;
+    --accent-hover: #3cb462;
+    --accent-ink: #06140a;
+    --accent-soft: #12241a;
+    --danger: #f07171;
+    --danger-soft: #2f1616;
+    --success-ink: #34c759;
+    --income: #3987e5;
+    --expense: #d95926;
+    --focus: #6da7ec;
+  }
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-ink: var(--ink);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-muted: var(--ink-muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success-ink: var(--success-ink);
+  --color-income: var(--income);
+  --color-expense: var(--expense);
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  background: var(--page);
+  color: var(--ink);
+}
+
+/* Amount columns line up digit under digit. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
