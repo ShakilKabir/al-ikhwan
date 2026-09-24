@@ -1,5 +1,7 @@
 # Al-Ikhwan club accounts
 
+**Live site: https://al-ikhwan-lime.vercel.app**
+
 The club's cash book, member dues and lender accounts as a website. It replaces
 the "Al-Ikhwan Income and expenses" Excel workbook: the data was imported from it
 once, and the database is now the source of truth.
@@ -66,9 +68,9 @@ npm run db:migrate             # create or update the tables
 npm run dev                    # http://localhost:3000
 ```
 
-For a database, create a branch of the production database in the Neon console
-(e.g. `dev`) and use its connection strings. A branch is a copy you can change
-freely without touching the live data.
+For a database, use the Neon `preview` branch (a copy of production you can
+change freely): `npx vercel env pull .env.local` fills in its connection strings,
+or copy them from the Neon console.
 
 Before pushing:
 
@@ -85,8 +87,10 @@ npm run typecheck && npm run lint && npm test
 
 ## Deploying
 
-Pushing to `main` on GitHub deploys to production. Pull requests get their own
-preview URL, which uses the Neon `preview` branch, not live data.
+Pushing to `main` on GitHub deploys to production (Vercel project `al-ikhwan`,
+team "Shakil Kabir's projects"). Pull requests get their own preview URL, which
+uses the Neon `preview` branch, not live data. Preview URLs need a Vercel login;
+only the production address is public.
 
 Environment variables (Vercel → Project → Settings → Environment Variables):
 
@@ -96,7 +100,7 @@ Environment variables (Vercel → Project → Settings → Environment Variables
 ## Backups
 
 - **Settings → Download Excel backup** exports every table to one Excel file. Do this now and then and keep a copy.
-- Neon can restore the database to an earlier point in time (the free plan keeps a short history). See Neon → Branches → Restore.
+- Neon can restore the database to any point in the last 6 hours (free plan). See Neon console → project "Al Ikhwan" → Branches → Restore.
 - **History** keeps the before/after values of every change, so one bad edit can be put back by hand.
 
 ## No login (yet)
