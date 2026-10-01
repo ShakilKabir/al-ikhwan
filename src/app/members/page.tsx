@@ -11,6 +11,7 @@ import {
   LinkButton,
   PageHeader,
   Select,
+  SortableTh,
   StatTile,
   Table,
   Td,
@@ -21,13 +22,20 @@ import type { MemberCategory } from "@/db/schema";
 import { DEFAULT_YEARLY_FEE, REGISTRATION_FEE } from "@/lib/club";
 import { currentYear, formatMoney, formatTaka, round2 } from "@/lib/format";
 import { CATEGORY_LABELS } from "@/lib/member-labels";
+import { nextSortDir, parseMemberSort, sortMembers, type MemberSort, type SortDir } from "@/lib/member-sort";
 import { listAssignees, listMembersWithDues, type MemberWithDues } from "@/lib/queries/members";
-import { intParam, param } from "@/lib/search-params";
+import { intParam, param, withParams } from "@/lib/search-params";
 import { getCurrentUser } from "@/lib/auth/current-user";
 
 export const metadata: Metadata = { title: "Members" };
 
 const FIRST_YEAR = 2025;
+
+type Sorting = {
+  current: { sort: MemberSort; dir: SortDir };
+  /** Where clicking a column header goes. */
+  href: (column: MemberSort) => string;
+};
 
 export default async function MembersPage({ searchParams }: PageProps<"/members">) {
   const sp = await searchParams;
@@ -37,6 +45,12 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
   const assigned = param(sp, "assigned");
   const owingOnly = param(sp, "owing") === "on";
   const showInactive = param(sp, "inactive") === "on";
+  const current = parseMemberSort(param(sp, "sort"), param(sp, "dir"));
+  const sorting: Sorting = {
+    current,
+    href: (column) =>
+      withParams("/members", sp, { sort: column, dir: nextSortDir(column, current), charged: undefined }),
+  };
 
   const [user, all, assignees] = await Promise.all([
     getCurrentUser(),
@@ -45,7 +59,7 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
   ]);
   // Phone numbers and notes are only shown to people who are logged in.
   const showPersonal = Boolean(user);
-  const rows = all.filter(
+  const filteredRows = all.filter(
     (m) =>
       (showInactive || m.isActive) &&
       (!owingOnly || m.due > 0) &&
@@ -55,6 +69,7 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
           v.toLowerCase().includes(q),
         )),
   );
+  const rows = sortMembers(filteredRows, current.sort, current.dir);
   const active = all.filter((m) => m.isActive);
   const sum = (list: MemberWithDues[], key: "due" | "paid" | "waived") =>
     round2(list.reduce((s, m) => s + m[key], 0));
@@ -114,6 +129,9 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
 
       <Card padded={false} className="mb-6">
         <FilterForm className="flex flex-wrap items-end gap-3 p-3" aria-label="Filter members">
+          {/* Changing a filter keeps the current sort. */}
+          <input type="hidden" name="sort" value={current.sort} />
+          <input type="hidden" name="dir" value={current.dir} />
           <div>
             <label htmlFor="year" className="mb-1 block text-xs font-medium text-ink-secondary">
               Year
@@ -163,7 +181,10 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
             Search
           </button>
           {filtered && (
-            <Link href={`/members?year=${year}`} className={buttonClass("ghost")}>
+            <Link
+              href={`/members?year=${year}&sort=${current.sort}&dir=${current.dir}`}
+              className={buttonClass("ghost")}
+            >
               Clear
             </Link>
           )}
@@ -181,9 +202,16 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
           const list = rows.filter((m) => m.category === category);
           if (list.length === 0) return null;
           return category === "prospective" ? (
-            <ProspectiveSection key={category} members={list} showPersonal={showPersonal} />
+            <ProspectiveSection key={category} members={list} showPersonal={showPersonal} sorting={sorting} />
           ) : (
-            <DuesSection key={category} category={category} year={year} members={list} showPersonal={showPersonal} />
+            <DuesSection
+              key={category}
+              category={category}
+              year={year}
+              members={list}
+              showPersonal={showPersonal}
+              sorting={sorting}
+            />
           );
         })}
       </div>
@@ -196,16 +224,40 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
   );
 }
 
+function SortHeader({
+  column,
+  label,
+  sorting,
+  align,
+}: {
+  column: MemberSort;
+  label: string;
+  sorting: Sorting;
+  align?: "left" | "right";
+}) {
+  return (
+    <SortableTh
+      href={sorting.href(column)}
+      sorted={sorting.current.sort === column ? sorting.current.dir : null}
+      align={align}
+    >
+      {label}
+    </SortableTh>
+  );
+}
+
 function DuesSection({
   category,
   year,
   members,
   showPersonal,
+  sorting,
 }: {
   category: MemberCategory;
   year: number;
   members: MemberWithDues[];
   showPersonal: boolean;
+  sorting: Sorting;
 }) {
   const total = (key: "carried" | "fees" | "waived" | "paid" | "due") =>
     round2(members.reduce((s, m) => s + m[key], 0));
@@ -215,20 +267,20 @@ function DuesSection({
       <Table>
         <thead>
           <tr>
-            <Th className="hidden sm:table-cell">ID</Th>
-            <Th>Name</Th>
+            <SortHeader column="id" label="ID" sorting={sorting} />
+            <SortHeader column="name" label="Name" sorting={sorting} />
             <Th className="hidden sm:table-cell">Assigned to</Th>
             <Th align="right" className="hidden lg:table-cell">From {year - 1}</Th>
             <Th align="right" className="hidden lg:table-cell">Fees {year}</Th>
             <Th align="right" className="hidden lg:table-cell">Waived</Th>
             <Th align="right" className="hidden md:table-cell">Paid {year}</Th>
-            <Th align="right">Due</Th>
+            <SortHeader column="due" label="Due" sorting={sorting} align="right" />
           </tr>
         </thead>
         <tbody>
           {members.map((m) => (
             <tr key={m.id} className="hover:bg-surface-muted">
-              <Td className="hidden whitespace-nowrap text-ink-secondary sm:table-cell">{m.code}</Td>
+              <Td className="whitespace-nowrap text-ink-secondary">{m.code}</Td>
               <Td>
                 <Link href={`/members/${m.id}?year=${year}`} className="font-medium hover:underline">
                   {m.name}
@@ -239,7 +291,6 @@ function DuesSection({
                   </span>
                 )}
                 <p className="text-xs text-ink-muted">
-                  <span className="sm:hidden">{m.code} · </span>
                   {[m.memberType, showPersonal && m.phone].filter(Boolean).join(" · ")}
                   {m.assignedTo && <span className="sm:hidden"> · {m.assignedTo}</span>}
                 </p>
@@ -257,7 +308,7 @@ function DuesSection({
         </tbody>
         <tfoot>
           <tr className="font-semibold">
-            <Td className="hidden sm:table-cell" />
+            <Td />
             <Td>Total</Td>
             <Td className="hidden sm:table-cell" />
             <Td align="right" className="hidden lg:table-cell">{formatMoney(total("carried"))}</Td>
@@ -272,7 +323,15 @@ function DuesSection({
   );
 }
 
-function ProspectiveSection({ members, showPersonal }: { members: MemberWithDues[]; showPersonal: boolean }) {
+function ProspectiveSection({
+  members,
+  showPersonal,
+  sorting,
+}: {
+  members: MemberWithDues[];
+  showPersonal: boolean;
+  sorting: Sorting;
+}) {
   return (
     <Card
       title="Under consideration"
@@ -282,8 +341,8 @@ function ProspectiveSection({ members, showPersonal }: { members: MemberWithDues
       <Table>
         <thead>
           <tr>
-            <Th className="hidden sm:table-cell">ID</Th>
-            <Th>Name</Th>
+            <SortHeader column="id" label="ID" sorting={sorting} />
+            <SortHeader column="name" label="Name" sorting={sorting} />
             <Th className="hidden sm:table-cell">Assigned to</Th>
             {showPersonal && <Th className="hidden md:table-cell">Notes</Th>}
           </tr>
@@ -291,7 +350,7 @@ function ProspectiveSection({ members, showPersonal }: { members: MemberWithDues
         <tbody>
           {members.map((m) => (
             <tr key={m.id} className="hover:bg-surface-muted">
-              <Td className="hidden whitespace-nowrap text-ink-secondary sm:table-cell">{m.code}</Td>
+              <Td className="whitespace-nowrap text-ink-secondary">{m.code}</Td>
               <Td>
                 <Link href={`/members/${m.id}`} className="font-medium hover:underline">
                   {m.name}

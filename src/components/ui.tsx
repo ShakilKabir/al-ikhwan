@@ -237,6 +237,9 @@ export function Table({ children }: { children: ReactNode }) {
   );
 }
 
+const thClass = (align: "left" | "right", className: string) =>
+  `border-b border-line bg-surface-muted px-3 py-2 text-xs font-semibold uppercase tracking-wide text-ink-secondary ${align === "right" ? "text-right" : "text-left"} ${className}`;
+
 export function Th({
   children,
   align = "left",
@@ -247,11 +250,41 @@ export function Th({
   className?: string;
 }) {
   return (
+    <th scope="col" className={thClass(align, className)}>
+      {children}
+    </th>
+  );
+}
+
+/**
+ * A column header that sorts the table: a link to the same page with the new
+ * sort in the URL. `sorted` is the current direction when this column is active.
+ */
+export function SortableTh({
+  children,
+  href,
+  sorted,
+  align = "left",
+  className = "",
+}: {
+  children: ReactNode;
+  href: string;
+  sorted: "asc" | "desc" | null;
+  align?: "left" | "right";
+  className?: string;
+}) {
+  return (
     <th
       scope="col"
-      className={`border-b border-line bg-surface-muted px-3 py-2 text-xs font-semibold uppercase tracking-wide text-ink-secondary ${align === "right" ? "text-right" : "text-left"} ${className}`}
+      aria-sort={sorted === "asc" ? "ascending" : sorted === "desc" ? "descending" : undefined}
+      className={thClass(align, className)}
     >
-      {children}
+      <Link href={href} scroll={false} className="inline-flex items-center gap-1 uppercase hover:text-ink">
+        {children}
+        <span aria-hidden className={sorted ? "text-ink" : "text-ink-muted"}>
+          {sorted === "asc" ? "↑" : sorted === "desc" ? "↓" : "↕"}
+        </span>
+      </Link>
     </th>
   );
 }
