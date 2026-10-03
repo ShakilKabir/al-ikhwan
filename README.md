@@ -1,6 +1,6 @@
 # Al-Ikhwan club accounts
 
-**Live site: https://al-ikhwan-lime.vercel.app**
+**Live site: https://alikhwan.vercel.app**
 
 The club's cash book, member dues and lender accounts as a website. It replaces
 the "Al-Ikhwan Income and expenses" Excel workbook: the data was imported from it

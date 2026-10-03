@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ColumnChart } from "@/components/charts";
 import { CategoryBars, ChartTable } from "@/components/category-bars";
+import { FlowIcon } from "@/components/mobile-bits";
 import { FilterForm } from "@/components/client";
 import { Card, LinkButton, PageHeader, Select, SignedAmount, StatTile, Table, Td, Th } from "@/components/ui";
 import { currentYear, formatDate, formatMoney, formatTaka, monthLabel, round2 } from "@/lib/format";
@@ -60,8 +61,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
         }
       />
 
-      <section aria-label="Club position today" className="mb-8 grid gap-3 md:grid-cols-4">
-        <div className="md:col-span-2">
+      <section aria-label="Club position today" className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="col-span-2">
           <StatTile
             hero
             label="Cash at hand"
@@ -70,11 +71,13 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
           />
         </div>
         <StatTile
+          tone="expense"
           label="Owed to lenders"
           value={formatTaka(overview.accountsPayable)}
           hint={<Link href="/loans" className="underline">See loans</Link>}
         />
         <StatTile
+          tone="expense"
           label={`Members owe (${thisYear})`}
           value={formatTaka(owed)}
           hint={
@@ -106,10 +109,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
         </noscript>
       </FilterForm>
 
-      <section aria-label={`Totals for ${scope}`} className="mb-6 grid gap-3 sm:grid-cols-3">
-        <StatTile label={`Income, ${scope}`} value={formatTaka(totals.income)} />
-        <StatTile label={`Expenses, ${scope}`} value={formatTaka(totals.expense)} />
-        <StatTile label={`Profit / loss, ${scope}`} value={formatTaka(totals.net)} />
+      <section aria-label={`Totals for ${scope}`} className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <StatTile tone="income" label={`Income, ${scope}`} value={formatTaka(totals.income)} />
+        <StatTile tone="expense" label={`Expenses, ${scope}`} value={formatTaka(totals.expense)} />
+        <StatTile className="max-sm:col-span-2" tone="accent" label={`Profit / loss, ${scope}`} value={formatTaka(totals.net)} />
       </section>
 
       <Card
@@ -169,10 +172,15 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
               <tr key={t.id}>
                 <Td className="hidden whitespace-nowrap text-ink-secondary sm:table-cell">{formatDate(t.date)}</Td>
                 <Td>
-                  {t.particulars}
-                  <p className="text-xs text-ink-muted sm:hidden">
-                    {formatDate(t.date)} · {t.categoryName}
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <FlowIcon type={t.type} />
+                    <div className="min-w-0">
+                      {t.particulars}
+                      <p className="text-xs text-ink-muted sm:hidden">
+                        {formatDate(t.date)} · {t.categoryName}
+                      </p>
+                    </div>
+                  </div>
                 </Td>
                 <Td className="hidden text-ink-secondary sm:table-cell">{t.categoryName}</Td>
                 <Td align="right" className="hidden sm:table-cell">

@@ -26,7 +26,7 @@ export default async function LoansPage() {
       />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
-        <StatTile label="Accounts payable" value={`৳ ${formatMoney(payable)}`} hint="What the club owes in total" />
+        <StatTile tone="expense" label="Accounts payable" value={`৳ ${formatMoney(payable)}`} hint="What the club owes in total" />
         <div className="rounded-lg border border-line bg-surface p-4 text-sm text-ink-secondary sm:col-span-2">
           <p className="font-medium text-ink">How loans work</p>
           <p className="mt-1">

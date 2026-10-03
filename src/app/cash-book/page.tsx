@@ -28,6 +28,7 @@ import {
   type TransactionFilters,
 } from "@/lib/queries/cash-book";
 import { intParam, param, withParams } from "@/lib/search-params";
+import { FlowIcon } from "@/components/mobile-bits";
 import { getCurrentUser } from "@/lib/auth/current-user";
 
 export const metadata: Metadata = { title: "Cash book" };
@@ -74,8 +75,10 @@ export default async function CashBookPage({ searchParams }: PageProps<"/cash-bo
         }
       />
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-3">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatTile
+          className="max-sm:col-span-2"
+          tone="accent"
           label="Cash at hand"
           value={`৳ ${formatMoney(overview.cashAtHand)}`}
           hint="Profit/loss plus money owed to lenders"
@@ -86,6 +89,7 @@ export default async function CashBookPage({ searchParams }: PageProps<"/cash-bo
           hint={`Income ${formatMoney(overview.income)} · Expenses ${formatMoney(overview.expense)}`}
         />
         <StatTile
+          tone="expense"
           label="Accounts payable"
           value={`৳ ${formatMoney(overview.accountsPayable)}`}
           hint={
@@ -170,27 +174,32 @@ export default async function CashBookPage({ searchParams }: PageProps<"/cash-bo
                 <tr key={t.id} className="hover:bg-surface-muted">
                   <Td className="hidden whitespace-nowrap text-ink-secondary sm:table-cell">{formatDate(t.date)}</Td>
                   <Td className="sm:max-w-md">
-                    {user ? (
-                      <Link
-                        href={`/cash-book/${t.id}/edit?returnTo=${encodeURIComponent(here)}`}
-                        className="font-medium hover:underline"
-                      >
-                        {t.particulars}
-                      </Link>
-                    ) : (
-                      <span className="font-medium">{t.particulars}</span>
-                    )}
-                    {t.memberId && (
-                      <span className="ml-2">
-                        <Badge tone="accent">
-                          <Link href={`/members/${t.memberId}`}>{t.memberCode}</Link>
-                        </Badge>
-                      </span>
-                    )}
-                    <p className="mt-0.5 text-xs text-ink-muted sm:hidden">
-                      {formatDate(t.date)} · {t.categoryName}
-                    </p>
-                    {t.notes && <p className="mt-0.5 text-xs text-ink-muted">{t.notes}</p>}
+                    <div className="flex items-center gap-3">
+                      <FlowIcon type={t.type} />
+                      <div className="min-w-0">
+                        {user ? (
+                          <Link
+                            href={`/cash-book/${t.id}/edit?returnTo=${encodeURIComponent(here)}`}
+                            className="font-medium hover:underline"
+                          >
+                            {t.particulars}
+                          </Link>
+                        ) : (
+                          <span className="font-medium">{t.particulars}</span>
+                        )}
+                        {t.memberId && (
+                          <span className="ml-2">
+                            <Badge tone="accent">
+                              <Link href={`/members/${t.memberId}`}>{t.memberCode}</Link>
+                            </Badge>
+                          </span>
+                        )}
+                        <p className="mt-0.5 text-xs text-ink-muted sm:hidden">
+                          {formatDate(t.date)} · {t.categoryName}
+                        </p>
+                        {t.notes && <p className="mt-0.5 text-xs text-ink-muted">{t.notes}</p>}
+                      </div>
+                    </div>
                   </Td>
                   <Td className="hidden text-ink-secondary sm:table-cell">{t.categoryName}</Td>
                   <Td align="right" className="hidden sm:table-cell">

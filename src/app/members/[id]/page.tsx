@@ -93,11 +93,12 @@ export default async function MemberPage({ params, searchParams }: PageProps<"/m
               <StatTile label={`Carried from ${year - 1}`} value={formatMoney(dues.carried)} />
               <StatTile label={`Fees ${year}`} value={formatMoney(dues.fees)} />
               <StatTile
+                tone="income"
                 label={`Paid ${year}`}
                 value={formatMoney(dues.paid)}
                 hint={dues.waived ? `Waived ${formatMoney(dues.waived)}` : undefined}
               />
-              <StatTile label="Due now" value={<DueAmount due={dues.due} />} />
+              <StatTile tone={dues.due > 0 ? "expense" : "accent"} label="Due now" value={<DueAmount due={dues.due} />} />
             </div>
           </section>
 
@@ -152,7 +153,7 @@ export default async function MemberPage({ params, searchParams }: PageProps<"/m
                           {credit ? formatMoney(line.amount) : ""}
                         </Td>
                         <Td align="right" className="sm:hidden">
-                          <SignedAmount value={line.amount} negative={credit} />
+                          <SignedAmount value={line.amount} negative={credit} plain />
                         </Td>
                         <Td align="right" className="font-medium">
                           {formatMoney(line.balance)}

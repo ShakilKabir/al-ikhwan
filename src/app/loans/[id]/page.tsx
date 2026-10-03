@@ -85,7 +85,7 @@ export default async function LenderPage({ params, searchParams }: PageProps<"/l
                     {e.kind === "repaid" ? formatMoney(e.amount) : ""}
                   </Td>
                   <Td align="right" className="sm:hidden">
-                    <SignedAmount value={e.amount} negative={e.kind === "repaid"} />
+                    <SignedAmount value={e.amount} negative={e.kind === "repaid"} plain />
                   </Td>
                   <Td align="right" className="font-medium">
                     {formatMoney(e.owed)}

@@ -18,6 +18,7 @@ import {
   Th,
 } from "@/components/ui";
 import { DueAmount } from "@/components/due-amount";
+import { MemberCode } from "@/components/mobile-bits";
 import type { MemberCategory } from "@/db/schema";
 import { DEFAULT_YEARLY_FEE, REGISTRATION_FEE } from "@/lib/club";
 import { currentYear, formatMoney, formatTaka, round2 } from "@/lib/format";
@@ -104,8 +105,10 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
         </div>
       )}
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-3">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatTile
+          className="max-sm:col-span-2"
+          tone="accent"
           label="Active members"
           value={active.length}
           hint={[
@@ -116,11 +119,13 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
           ].join(" · ")}
         />
         <StatTile
+          tone="expense"
           label={`Owed to the club, end of ${year}`}
           value={formatTaka(sum(active, "due"))}
           hint={`Regular members ${formatTaka(sum(active.filter((m) => m.category === "regular"), "due"))}`}
         />
         <StatTile
+          tone="income"
           label={`Collected from members in ${year}`}
           value={formatTaka(sum(all, "paid"))}
           hint={`Waived ${formatTaka(sum(all, "waived"))}`}
@@ -280,7 +285,9 @@ function DuesSection({
         <tbody>
           {members.map((m) => (
             <tr key={m.id} className="hover:bg-surface-muted">
-              <Td className="whitespace-nowrap text-ink-secondary">{m.code}</Td>
+              <Td className="whitespace-nowrap text-ink-secondary">
+                <MemberCode code={m.code} category={m.category} />
+              </Td>
               <Td>
                 <Link href={`/members/${m.id}?year=${year}`} className="font-medium hover:underline">
                   {m.name}
@@ -350,7 +357,9 @@ function ProspectiveSection({
         <tbody>
           {members.map((m) => (
             <tr key={m.id} className="hover:bg-surface-muted">
-              <Td className="whitespace-nowrap text-ink-secondary">{m.code}</Td>
+              <Td className="whitespace-nowrap text-ink-secondary">
+                <MemberCode code={m.code} category={m.category} />
+              </Td>
               <Td>
                 <Link href={`/members/${m.id}`} className="font-medium hover:underline">
                   {m.name}

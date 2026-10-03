@@ -88,7 +88,7 @@ export function Card({
   padded?: boolean;
 }) {
   return (
-    <section className={`rounded-lg border border-line bg-surface ${className}`}>
+    <section className={`rounded-lg border border-line bg-surface max-sm:rounded-xl max-sm:shadow-sm ${className}`}>
       {(title || actions) && (
         <div className="flex flex-wrap items-start justify-between gap-2 border-b border-line px-4 py-3">
           <div>
@@ -103,25 +103,48 @@ export function Card({
   );
 }
 
-/** A labelled headline figure. `hero` makes it the page's one big number. */
+export type Tone = "neutral" | "accent" | "income" | "expense";
+
+/** On phones, tiles are tinted by what they mean; on larger screens they stay white. */
+const TILE_TONES: Record<Tone, { tile: string; label: string }> = {
+  neutral: { tile: "", label: "" },
+  accent: { tile: "max-sm:border-accent/20 max-sm:bg-accent-soft", label: "max-sm:text-accent" },
+  income: { tile: "max-sm:border-income/20 max-sm:bg-income-soft", label: "max-sm:text-income-ink" },
+  expense: { tile: "max-sm:border-expense/20 max-sm:bg-expense-soft", label: "max-sm:text-expense-ink" },
+};
+
+/**
+ * A labelled headline figure. `hero` makes it the page's one big number (a green
+ * gradient card on phones); `tone` tints the tile on phones.
+ */
 export function StatTile({
   label,
   value,
   hint,
   hero = false,
+  tone = "neutral",
+  className = "",
 }: {
   label: string;
   value: ReactNode;
   hint?: ReactNode;
   hero?: boolean;
+  tone?: Tone;
+  className?: string;
 }) {
+  const tile = hero
+    ? "max-sm:border-transparent max-sm:bg-linear-to-br max-sm:from-brand-bar max-sm:to-brand-bar-end max-sm:text-white max-sm:shadow-md"
+    : TILE_TONES[tone].tile;
+  const label_ = hero ? "max-sm:text-brand-bar-muted" : TILE_TONES[tone].label;
   return (
-    <div className="rounded-lg border border-line bg-surface p-3 sm:p-4">
-      <p className="text-sm text-ink-secondary">{label}</p>
+    <div className={`rounded-lg border border-line bg-surface p-3 max-sm:rounded-xl sm:p-4 ${tile} ${className}`}>
+      <p className={`text-sm text-ink-secondary ${label_}`}>{label}</p>
       <p className={`mt-1 font-semibold tracking-tight ${hero ? "text-4xl sm:text-5xl" : "text-xl sm:text-2xl"}`}>
         {value}
       </p>
-      {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
+      {hint && (
+        <p className={`mt-1 text-xs text-ink-muted ${hero ? "max-sm:text-brand-bar-muted" : ""}`}>{hint}</p>
+      )}
     </div>
   );
 }
@@ -130,10 +153,22 @@ export function Money({ value, className = "" }: { value: number; className?: st
   return <span className={`tabular ${className}`}>{formatMoney(value)}</span>;
 }
 
-/** "+1,000.00" or "−1,300.00": used on phones where two amount columns share one. */
-export function SignedAmount({ value, negative = false }: { value: number; negative?: boolean }) {
+/**
+ * "+1,000.00" or "−1,300.00": used on phones where two amount columns share one.
+ * Coloured as money in (blue) or out (orange), unless `plain` (e.g. a member's charges and payments).
+ */
+export function SignedAmount({
+  value,
+  negative = false,
+  plain = false,
+}: {
+  value: number;
+  negative?: boolean;
+  plain?: boolean;
+}) {
+  const colour = plain ? "" : negative ? "text-expense-ink" : "text-income-ink";
   return (
-    <span className="tabular whitespace-nowrap font-medium">
+    <span className={`tabular whitespace-nowrap font-semibold ${colour}`}>
       {negative ? "−" : "+"}
       {formatMoney(value)}
     </span>
@@ -238,7 +273,7 @@ export function Table({ children }: { children: ReactNode }) {
 }
 
 const thClass = (align: "left" | "right", className: string) =>
-  `border-b border-line bg-surface-muted px-3 py-2 text-xs font-semibold uppercase tracking-wide text-ink-secondary ${align === "right" ? "text-right" : "text-left"} ${className}`;
+  `border-b border-line bg-surface-muted px-2 py-2 sm:px-3 text-xs font-semibold uppercase tracking-wide text-ink-secondary ${align === "right" ? "text-right" : "text-left"} ${className}`;
 
 export function Th({
   children,
@@ -303,7 +338,7 @@ export function Td({
   return (
     <td
       colSpan={colSpan}
-      className={`border-b border-line px-3 py-2 align-top ${align === "right" ? "text-right tabular" : ""} ${className}`}
+      className={`border-b border-line px-2 py-2 align-top max-sm:[overflow-wrap:anywhere] sm:px-3 ${align === "right" ? "text-right tabular" : ""} ${className}`}
     >
       {children}
     </td>

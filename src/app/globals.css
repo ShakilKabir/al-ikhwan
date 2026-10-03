@@ -26,6 +26,16 @@
   --income: #2a78d6;
   --expense: #eb6834;
   --focus: #2a78d6;
+  /* Phone layout: the green header bar and tinted tiles, pills and icons. */
+  --brand-bar: #15692f;
+  --brand-bar-end: #0b4a21;
+  --brand-bar-muted: #cfe8d6;
+  --income-ink: #1c5cab;
+  --income-soft: #e8f1fc;
+  --expense-ink: #b03d0c;
+  --expense-soft: #fdeee6;
+  --violet-ink: #5b3cc4;
+  --violet-soft: #efebfc;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -49,6 +59,15 @@
     --income: #3987e5;
     --expense: #d95926;
     --focus: #6da7ec;
+    --brand-bar: #164a29;
+    --brand-bar-end: #0c2a17;
+    --brand-bar-muted: #b9d9c3;
+    --income-ink: #86b6ef;
+    --income-soft: #13233a;
+    --expense-ink: #f29a72;
+    --expense-soft: #2e1a10;
+    --violet-ink: #b3a6f3;
+    --violet-soft: #221b3d;
   }
 }
 
@@ -70,6 +89,15 @@
   --color-success-ink: var(--success-ink);
   --color-income: var(--income);
   --color-expense: var(--expense);
+  --color-brand-bar: var(--brand-bar);
+  --color-brand-bar-end: var(--brand-bar-end);
+  --color-brand-bar-muted: var(--brand-bar-muted);
+  --color-income-ink: var(--income-ink);
+  --color-income-soft: var(--income-soft);
+  --color-expense-ink: var(--expense-ink);
+  --color-expense-soft: var(--expense-soft);
+  --color-violet-ink: var(--violet-ink);
+  --color-violet-soft: var(--violet-soft);
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
